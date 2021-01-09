@@ -71,24 +71,38 @@ const events = {
         const tm = setTimeout(() => {
             clearInterval(interval);
             onBadSet(game, player);
-        }, CHOICETIME+50);
+        }, CHOICETIME + 50);
 
         socket.addListener("validation", (cards) => {
             socket.removeAllListeners("validation");
             clearInterval(interval);
             clearTimeout(tm);
+            if (cards.length !== 3) {
+                onBadSet(game,player);
+                return;
+            }
+            let errorFlag = false;
 
             // Check if picked cards form a set
             const reducer = (acc, cur) => {
                 const card = game.state.board[cur];
+                if (!card) {
+                    errorFlag = true;
+                    return acc;
+                }
                 acc[0] = (acc[0] + card.shape) % 3;
                 acc[1] = (acc[1] + card.number) % 3;
                 acc[2] = (acc[2] + card.color) % 3;
                 acc[3] = (acc[3] + card.fill) % 3;
                 return acc;
-            }
+            };
 
-            const res = cards.reduce(reducer, [0, 0, 0, 0])
+            const res = cards.reduce(reducer, [0, 0, 0, 0]);
+
+            if (errorFlag) {
+                onBadSet(game,player);
+                return;
+            }
 
             for (let item of res) {
                 if (item !== 0) {
@@ -142,7 +156,7 @@ function onGoodSet(game, player, cards) {
     cleanVote(game);
     player.score++;
     game.state.type = "playing";
-    game.state.payload={};
+    game.state.payload = {};
 
 
     if (game.state.board.length === 0) {
@@ -151,12 +165,19 @@ function onGoodSet(game, player, cards) {
     }
 
     // Replace set cards if less then 12 on board
-    if (game.state.board.length < 12 && game.state.cardsLeft > 0) {
+    if (game.state.board.length <= 12 && game.state.cardsLeft > 0) {
         const newCards = game.deck.draw(3);
         game.state.cardsLeft = game.deck.cards.length;
         cards.forEach((card, index) => {
             game.state.board[card] = newCards[index];
         })
+    } else {
+        if (game.state.board.length > 12) {
+            game.state.board = game.state.board.filter((_, index) => {
+                return !cards.includes(index)
+            })
+        }
+
     }
 
     game.refresh();
@@ -168,7 +189,7 @@ function onBadSet(game, player) {
         player.score--;
     }
     game.state.type = "playing";
-    game.state.payload={};
+    game.state.payload = {};
     game.refresh();
 
 }
