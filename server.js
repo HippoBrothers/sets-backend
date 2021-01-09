@@ -123,6 +123,7 @@ const events = {
         }
 
         if (vote(game, player)) {
+            cleanVote(game);
             if (game.deck.isEmpty()) {
                 // End the game
                 endGame(game);
@@ -132,8 +133,9 @@ const events = {
                 game.state.cardsLeft = game.deck.cards.length;
 
             }
-            game.refresh();
         }
+        game.refresh();
+        console.log(game.state.players)
 
 
     }
