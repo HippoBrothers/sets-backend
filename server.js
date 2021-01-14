@@ -76,26 +76,23 @@ const events = {
         const onBuzzEnd = () => {
             socket.removeAllListeners("validation");
             socket.removeAllListeners("select");
-            game.state.selectedCards=undefined;
+            game.state.selectedCards = undefined;
         };
 
         const tm = setTimeout(() => {
             onBuzzEnd();
             clearInterval(interval);
-            onBadSet(game, player,0);
+            onBadSet(game, player);
         }, CHOICETIME - 50);
 
-        socket.addListener('select', (cards) => {
-            game.state.selectedCards=cards;
-            game.refresh();
-        })
-        socket.addListener("validation", (cards) => {
-            console.log("Validation, cards:",cards)
+        const validate = () => {
+            const cards = game.state.selectedCards;
+            console.log("Validation, cards:", cards)
             onBuzzEnd();
             clearInterval(interval);
             clearTimeout(tm);
             if (cards.length !== 3) {
-                onBadSet(game, player,1);
+                onBadSet(game, player);
                 return;
             }
             let errorFlag = false;
@@ -117,21 +114,36 @@ const events = {
             const res = cards.reduce(reducer, [0, 0, 0, 0]);
 
             if (errorFlag) {
-                console.log("c",cards)
-                onBadSet(game, player,2);
+                console.log("c", cards)
+                onBadSet(game, player);
                 return;
             }
 
             for (let item of res) {
                 if (item !== 0) {
                     // Not a set
-                    onBadSet(game, player,3);
+                    onBadSet(game, player);
                     return;
                 }
             }
             // Is a set
             onGoodSet(game, player, cards);
+        }
+        socket.addListener('select', (card) => {
+            const index = game.state.selectedCards.index(card);
+            if (index === -1) {
+                game.state.selectedCards.push(card);
+            } else {
+                game.state.selectedCards.splice(index, 1);
+            }
+
+            if (game.state.selectedCards.length === 3) {
+                validate();
+            } else {
+                game.refresh();
+            }
         })
+        socket.addListener("validation", validate);
 
 
     },
@@ -201,8 +213,7 @@ function onGoodSet(game, player, cards) {
     game.refresh();
 }
 
-function onBadSet(game, player,nb) {
-    console.log("badset",nb)
+function onBadSet(game, player) {
     if (player.score > 0) {
         player.score--;
     }
