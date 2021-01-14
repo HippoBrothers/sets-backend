@@ -3,21 +3,31 @@ const shortid = require('shortid');
 
 class Game {
 
-    constructor(io, events) {
+    constructor(io, gameOpts) {
 
         this.roomID = shortid.generate();
         this.players = {};
         this.disconnectedPlayers = {};
         this.state = {type: 'waiting', payload: {roomID: this.roomID}};
         this.io = io;
-        this.customEvents = events;
+        if (gameOpts) {
+
+            if (gameOpts.events) {
+                this.customEvents = gameOpts.events;
+            }
+            if (gameOpts.baseState) {
+                this.state = gameOpts.baseState;
+            }
+        }
 
     };
 
     destroyPlayer(socket) {
-        Object.entries(this.customEvents).forEach(([event, action]) => {
-            socket.removeAllListeners(event);
-        })
+        if (this.customEvents) {
+            Object.entries(this.customEvents).forEach(([event, action]) => {
+                socket.removeAllListeners(event);
+            })
+        }
     }
 
     joinRoom(args, socket) {
@@ -29,13 +39,20 @@ class Game {
         if (args.secret && this.disconnectedPlayers[args.secret]) {
 
             player = this.disconnectedPlayers[args.secret];
-            player.destroy = ()=> (this.destroyPlayer(socket));
+            player.destroy = () => (this.destroyPlayer(socket));
             delete this.disconnectedPlayers[args.secret];
         } else {
             const playerID = shortid.generate();
             let nom = (!args.name || args.name === "") ? ('Anonyme_' + playerID) : args.name;
 
-            player = {id: playerID, name: nom, score: 0, secret: shortid.generate(), meta: {},destroy: ()=> (this.destroyPlayer(socket))};
+            player = {
+                id: playerID,
+                name: nom,
+                score: 0,
+                secret: shortid.generate(),
+                meta: {},
+                destroy: () => (this.destroyPlayer(socket))
+            };
         }
 
         this.players[player.id] = player;
@@ -43,9 +60,13 @@ class Game {
 
 
         // Bind custom Events to new socket
-        Object.entries(this.customEvents).forEach(([event, action]) => {
-            socket.on(event, (args) => {action(this, socket, player, args)});
-        })
+        if (this.customEvents) {
+            Object.entries(this.customEvents).forEach(([event, action]) => {
+                socket.on(event, (args) => {
+                    action(this, socket, player, args)
+                });
+            })
+        }
 
         // Refresh scoreboard
         this.refresh();

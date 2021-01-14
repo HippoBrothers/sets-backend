@@ -47,6 +47,7 @@ const events = {
             game.state.board = game.deck.draw(12);
             game.state.cardsLeft = game.deck.cards.length;
             game.state.type = "playing";
+            game.state.selectedCards = [];
             game.resetScoreBoard();
             cleanVote(game);
 
@@ -76,7 +77,7 @@ const events = {
         const onBuzzEnd = () => {
             socket.removeAllListeners("validation");
             socket.removeAllListeners("select");
-            game.state.selectedCards = undefined;
+            game.state.selectedCards = [];
         };
 
         const tm = setTimeout(() => {
@@ -228,7 +229,7 @@ function cleanVote(game) {
 }
 
 
-new GameServer(io, events);
+new GameServer(io, {events});
 
 http.listen(PORT, function () {
     console.log('listening on *:', PORT);

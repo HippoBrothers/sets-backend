@@ -1,7 +1,7 @@
 const {Game} = require("./Game");
 
 class GameServer {
-    constructor(io, events) {
+    constructor(io,gameOpts) {
         this.games = {};
         this.io = io;
 
@@ -9,7 +9,7 @@ class GameServer {
             console.log("Player connected")
             socket.on('create', (args) => {
                 console.log("create received", args);
-                const game = new Game(io, events);
+                const game = new Game(io,gameOpts);
                 this.games[game.roomID] = game;
                 args.roomID = game.roomID;
                 this.joinGame(socket, args);
