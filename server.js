@@ -15,7 +15,9 @@ const path = require('path');
 const {Deck} = require("./src/Deck");
 const {GameServer} = require("./src/GameServer");
 
-//app.use(express.static(path.join(__dirname, 'public')));
+const PORT = process.env.PORT || 4000;
+
+app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname + '/public/index.html'));
@@ -28,7 +30,7 @@ const INTTIME = 1000;
 const events = {
     "voteStart": (game, socket, player, args) => {
 
-        if (game.state.type !== "waiting") {
+        if (game.state.type !== "waiting" && game.state.type !== "end") {
             return;
         }
 
@@ -69,16 +71,18 @@ const events = {
             game.refresh();
         }, INTTIME)
         const tm = setTimeout(() => {
+            socket.removeAllListeners("validation");
             clearInterval(interval);
-            onBadSet(game, player);
-        }, CHOICETIME + 50);
+            onBadSet(game, player,0);
+        }, CHOICETIME - 50);
 
         socket.addListener("validation", (cards) => {
+            console.log("Validation, cards:",cards)
             socket.removeAllListeners("validation");
             clearInterval(interval);
             clearTimeout(tm);
             if (cards.length !== 3) {
-                onBadSet(game,player);
+                onBadSet(game, player,1);
                 return;
             }
             let errorFlag = false;
@@ -100,14 +104,15 @@ const events = {
             const res = cards.reduce(reducer, [0, 0, 0, 0]);
 
             if (errorFlag) {
-                onBadSet(game,player);
+                console.log("c",cards)
+                onBadSet(game, player,2);
                 return;
             }
 
             for (let item of res) {
                 if (item !== 0) {
                     // Not a set
-                    onBadSet(game, player);
+                    onBadSet(game, player,3);
                     return;
                 }
             }
@@ -118,7 +123,7 @@ const events = {
 
     },
     "voteAddCards": (game, socket, player, args) => {
-        if (game.state.type !== "playing" && game.state.type !== "end") {
+        if (game.state.type !== "playing") {
             return;
         }
 
@@ -155,6 +160,7 @@ function vote(game, player) {
 }
 
 function onGoodSet(game, player, cards) {
+    console.log("goodset")
     cleanVote(game);
     player.score++;
     game.state.type = "playing";
@@ -174,19 +180,16 @@ function onGoodSet(game, player, cards) {
             game.state.board[card] = newCards[index];
         })
     } else {
-        if (game.state.board.length > 12) {
-            game.state.board = game.state.board.filter((_, index) => {
-                return !cards.includes(index)
-            })
-        }
-
+        game.state.board = game.state.board.filter((_, index) => {
+            return !cards.includes(index)
+        })
     }
 
     game.refresh();
 }
 
-function onBadSet(game, player) {
-
+function onBadSet(game, player,nb) {
+    console.log("badset",nb)
     if (player.score > 0) {
         player.score--;
     }
@@ -203,6 +206,6 @@ function cleanVote(game) {
 
 new GameServer(io, events);
 
-http.listen(4000, function () {
-    console.log('listening on *:4000');
+http.listen(PORT, function () {
+    console.log('listening on *:', PORT);
 });
