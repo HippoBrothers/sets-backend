@@ -1,12 +1,14 @@
+require('dotenv-flow').config()
 const express = require('express');
 
 const app = express();
 
 const http = require('http').createServer(app);
 
+console.log(process.env.FRONT_ADDR)
 const io = require('socket.io')(http, {
     cors: {
-        origin: "http://localhost:3000",
+        origin: process.env.FRONT_ADDR,
         methods: ["GET", "POST"]
     }
 });
@@ -70,15 +72,26 @@ const events = {
             game.state.payload = {playerID: player.id, time};
             game.refresh();
         }, INTTIME)
-        const tm = setTimeout(() => {
+
+        const onBuzzEnd = () => {
             socket.removeAllListeners("validation");
+            socket.removeAllListeners("select");
+            game.state.selectedCards=undefined;
+        };
+
+        const tm = setTimeout(() => {
+            onBuzzEnd();
             clearInterval(interval);
             onBadSet(game, player,0);
         }, CHOICETIME - 50);
 
+        socket.addListener('select', (cards) => {
+            game.state.selectedCards=cards;
+            game.refresh();
+        })
         socket.addListener("validation", (cards) => {
             console.log("Validation, cards:",cards)
-            socket.removeAllListeners("validation");
+            onBuzzEnd();
             clearInterval(interval);
             clearTimeout(tm);
             if (cards.length !== 3) {
