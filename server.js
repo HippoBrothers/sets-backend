@@ -130,7 +130,7 @@ const events = {
             onGoodSet(game, player, cards);
         }
         socket.addListener('select', (card) => {
-            const index = game.state.selectedCards.index(card);
+            const index = game.state.selectedCards.indexOf(card);
             if (index === -1) {
                 game.state.selectedCards.push(card);
             } else {
