@@ -3,6 +3,7 @@ const {Game} = require("./Game");
 class GameServer {
     constructor(io, events) {
         this.games = {};
+        this.io = io;
 
         io.on('connection', (socket) => {
             console.log("Player connected")
@@ -39,8 +40,15 @@ class GameServer {
     }
 
     joinGame(socket, args) {
-        const id = this.games[args.roomID].joinRoom(args, socket);
+        const game = this.games[args.roomID];
+        if (!game) {
+            return;
+        }
+        const id = game.joinRoom(args, socket);
 
+        socket.on('chat', (message) => {
+            this.io.to(this.roomID).emit('chat', {exp: game.players[id].name, message});
+        })
         socket.on('leave', () => {
             console.log("Leave received");
 
@@ -50,6 +58,7 @@ class GameServer {
                 }
                 socket.removeAllListeners('leave');
                 socket.removeAllListeners('disconnect');
+                socket.removeAllListeners('chat');
             }
         });
         socket.on('disconnect', () => {
