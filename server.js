@@ -139,7 +139,10 @@ const events = {
             }
 
             if (game.state.selectedCards.length === 3) {
-                validate();
+                clearTimeout(tm);
+                socket.removeAllListeners("validation");
+                socket.removeAllListeners("select");
+                setTimeout(validate, 1000)
             } else {
                 game.refresh();
             }
