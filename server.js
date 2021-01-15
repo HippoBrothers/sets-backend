@@ -142,6 +142,7 @@ const events = {
                 clearTimeout(tm);
                 socket.removeAllListeners("validation");
                 socket.removeAllListeners("select");
+                game.refresh();
                 setTimeout(validate, 1000)
             } else {
                 game.refresh();
