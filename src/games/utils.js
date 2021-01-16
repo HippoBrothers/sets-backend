@@ -35,5 +35,30 @@ function checkSet(cards, board) {
     return true;
 }
 
+function howManySetsLeft(board) {
+    const combs = findAllCombinations(board);
+    let cpt = 0;
+    combs.forEach((it) => {
+            if (checkSet(it, board)) {
+                cpt++;
+            }
+        }
+    )
+    return cpt;
+}
+
+function findAllCombinations(board) {
+    const comb = [];
+    for (let i = 0; i < board.length; i++) {
+        for (let j = i + 1; j < board.length; j++) {
+            for (let k = j + 1; k < board.length; k++) {
+                comb.push([i, j, k]);
+            }
+        }
+    }
+    return comb;
+}
+
 
 exports.checkSet = checkSet;
+exports.howManySetsLeft = howManySetsLeft;
