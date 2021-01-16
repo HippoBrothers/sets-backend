@@ -5,6 +5,7 @@ class Game {
 
     constructor(io, gameOpts) {
 
+        console.log("gm opts", gameOpts)
         this.roomID = shortid.generate();
         this.players = {};
         this.disconnectedPlayers = {};
