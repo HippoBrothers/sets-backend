@@ -35,6 +35,21 @@ function checkSet(cards, board) {
     return true;
 }
 
+function changeCards(game, cards) {
+    // Replace set cards if less then 12 on board
+    if (game.state.board.length <= 12 && game.state.cardsLeft > 0) {
+        const newCards = game.deck.draw(3);
+        game.state.cardsLeft = game.deck.cards.length;
+        cards.forEach((card, index) => {
+            game.state.board[card] = newCards[index];
+        })
+    } else {
+        game.state.board = game.state.board.filter((_, index) => {
+            return !cards.includes(index)
+        })
+    }
+}
+
 function howManySetsLeft(board) {
     const combs = findAllCombinations(board);
     let cpt = 0;
@@ -61,4 +76,5 @@ function findAllCombinations(board) {
 
 
 exports.checkSet = checkSet;
+exports.changeCards = changeCards;
 exports.howManySetsLeft = howManySetsLeft;

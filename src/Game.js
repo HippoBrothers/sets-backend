@@ -3,21 +3,17 @@ const shortid = require('shortid');
 
 class Game {
 
-    constructor(io, gameOpts) {
+    constructor(io, gameOpts, gameMode) {
 
-        console.log("gm opts", gameOpts)
         this.roomID = shortid.generate();
         this.players = {};
         this.disconnectedPlayers = {};
-        this.state = {type: 'waiting', payload: {roomID: this.roomID}};
+        this.state = {gameMode, type: 'waiting', payload: {roomID: this.roomID}};
         this.io = io;
         if (gameOpts) {
 
             if (gameOpts.events) {
                 this.customEvents = gameOpts.events;
-            }
-            if (gameOpts.baseState) {
-                this.state = gameOpts.baseState;
             }
         }
 

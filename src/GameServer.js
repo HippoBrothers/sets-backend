@@ -9,7 +9,14 @@ class GameServer {
             console.log("Player connected")
             socket.on('create', (args) => {
                 console.log("create received", args);
-                const game = new Game(io,games.classic);
+                const tmp_Gamemode = "classic";
+
+                if (!games[tmp_Gamemode]){
+                    return;
+                }
+
+                // Create new game
+                const game = new Game(io,games[tmp_Gamemode], tmp_Gamemode);
                 this.games[game.roomID] = game;
                 args.roomID = game.roomID;
                 this.joinGame(socket, args);
