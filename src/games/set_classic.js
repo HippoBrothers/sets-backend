@@ -127,8 +127,8 @@ const events = {
 
 function endGame(game) {
     game.state.type = "end";
-    const sorted = game.players.sort((a, b) => {
-        return b-a;
+    const sorted = game.getScoreboard().sort((a, b) => {
+        return b.score-a.score;
     })
     game.state.winner = sorted[0];
     game.refresh();
