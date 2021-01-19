@@ -25,6 +25,9 @@ const events = {
             game.state.cardsLeft = game.deck.cards.length;
             game.state.type = "playing";
             game.state.selectedCards = [];
+            game.state.lastSet = [];
+            game.state.winner = undefined;
+
             game.resetScoreBoard();
             cleanVote(game);
 
@@ -124,6 +127,10 @@ const events = {
 
 function endGame(game) {
     game.state.type = "end";
+    const sorted = game.players.sort((a, b) => {
+        return b-a;
+    })
+    game.state.winner = sorted[0];
     game.refresh();
 
 }
@@ -147,6 +154,9 @@ function onGoodSet(game, player, cards) {
         endGame(game);
         return;
     }
+    game.state.lastSet = cards.map(it => {
+        return game.state.board[it];
+    })
     utils.changeCards(game, cards);
 
     game.refresh();

@@ -2,6 +2,8 @@ const {Deck} = require("../Deck");
 const utils = require('./utils');
 
 const GAME_BASE_TIME = 30;
+const ON_WIN_BONUS_TIME = 10;
+const ON_LOOSE_PENALTY_TIME = 5;
 
 
 const events = {
@@ -76,7 +78,7 @@ const events = {
                 // Add 3 more cards to game board
                 game.state.board = game.state.board.concat(game.deck.draw(3));
                 game.state.cardsLeft = game.deck.cards.length;
-
+                game.state.timeLeft += ON_WIN_BONUS_TIME;
             }
         }
         game.refresh();
@@ -85,6 +87,7 @@ const events = {
 }
 
 function endGame(game) {
+    clearInterval(game.timerInt);
     game.state.type = "end";
     game.refresh();
 }
@@ -117,14 +120,14 @@ function onGoodSet(game, cards) {
         endGame(game);
         return;
     }
-    game.state.timeLeft += 5;
+    game.state.timeLeft += ON_WIN_BONUS_TIME;
 
     game.refresh();
 }
 
 function onBadSet(game) {
 
-    game.state.timeLeft -= 2;
+    game.state.timeLeft -= ON_LOOSE_PENALTY_TIME;
     checkGameOver(game);
     game.refresh();
 
